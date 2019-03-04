@@ -9,24 +9,6 @@
   "author": "WofWca",
   "license": "MIT",
   "repository": "github:wofwca/news",
-  "eslintConfig": {
-    "extends": [
-      "eslint:recommended"
-    ],
-    "rules": {
-      "semi": [
-        "warn",
-        "always"
-      ],
-      "quotes": [
-        "warn",
-        "single"
-      ],
-      "camelcase": [
-        "warn"
-      ]
-    }
-  },
   "devDependencies": {
     "eslint": "^5.15.0",
     "nodemon": "^1.18.10"
