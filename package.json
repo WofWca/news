@@ -1,0 +1,11 @@
+{
+  "name": "news",
+  "version": "0.0.0",
+  "description": "News DB admin API",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "WofWca",
+  "license": "MIT"
+}
