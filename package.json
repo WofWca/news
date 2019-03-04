@@ -8,6 +8,7 @@
   },
   "author": "WofWca",
   "license": "MIT",
+  "repository": "github:wofwca/news",
   "eslintConfig": {
     "extends": [
       "eslint:recommended"
