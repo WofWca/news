@@ -9,7 +9,6 @@ const bodyParser = require('koa-bodyparser');
 const basicAuth = require('basic-auth');
 const uuidv4 = require('uuid/v4');
 
-// const newModel = // TODO
 const PORT = 8000; // TODO
 const MONGO_URL = 'mongodb://localhost:27017/';
 const DB_NAME = 'news_app';
