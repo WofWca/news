@@ -77,8 +77,14 @@ newsRouter.delete('/:id', async ctx => {
 
 // Uses basic auth.
 rootRouter.post('/generate-token', async ctx => {
-  const { name, pass } = basicAuth(ctx.req);
-  const user = await usersCollection.findOne({ login: name, password: pass });
+  const credentials = basicAuth(ctx.req);
+  if (!credentials) {
+    ctx.throw(401, 'Use Basic Authentication');
+  }
+  const user = await usersCollection.findOne({
+    login: credentials.name,
+    password: credentials.pass
+  });
   if (!user) {
     ctx.throw(401, 'No such login/password pair');
   } else {
