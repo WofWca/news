@@ -37,10 +37,10 @@ function adminTokenAuthMiddleware() {
     }
     const authToken = authHeader.slice(authMethodStr.length);
     const user = await usersCollection.findOne({authToken: authToken});
-    if (!user) {
+    if (user === null) {
       ctx.throw (403, 'No such token');
     }
-    if (!user.admin) {
+    if (user.admin !== true) {
       ctx.throw(403, 'Not admin');
     }
     ctx.state.user = user;
@@ -54,7 +54,7 @@ newsRouter.get('/', async ctx => {
 });
 newsRouter.post('/', async ctx => {
   const newNews = ctx.request.body;
-  if (!newNews.author) {
+  if (!newNews.hasOwnProperty('author')) {
     newNews.authorId = ctx.state.user._id;
   }
   const res = await newsCollection.insertOne(newNews);
@@ -78,14 +78,14 @@ newsRouter.delete('/:id', async ctx => {
 // Uses basic auth.
 rootRouter.post('/generate-token', async ctx => {
   const credentials = basicAuth(ctx.req);
-  if (!credentials) {
+  if (credentials === undefined) {
     ctx.throw(401, 'Use Basic Authentication');
   }
   const user = await usersCollection.findOne({
     login: credentials.name,
     password: credentials.pass
   });
-  if (!user) {
+  if (user === null) {
     ctx.throw(403, 'No such login/password pair');
   } else {
     const newAuthToken = uuidv4();
