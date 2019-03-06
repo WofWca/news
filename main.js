@@ -38,10 +38,10 @@ function adminTokenAuthMiddleware() {
     const authToken = authHeader.slice(authMethodStr.length);
     const user = await usersCollection.findOne({authToken: authToken});
     if (!user) {
-      ctx.throw (401, 'No such token');
+      ctx.throw (403, 'No such token');
     }
     if (!user.admin) {
-      ctx.throw(401, 'Not admin');
+      ctx.throw(403, 'Not admin');
     }
     ctx.state.user = user;
     await next();
@@ -86,7 +86,7 @@ rootRouter.post('/generate-token', async ctx => {
     password: credentials.pass
   });
   if (!user) {
-    ctx.throw(401, 'No such login/password pair');
+    ctx.throw(403, 'No such login/password pair');
   } else {
     const newAuthToken = uuidv4();
     ctx.body = { authToken: newAuthToken };
