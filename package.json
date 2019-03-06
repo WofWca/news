@@ -15,6 +15,7 @@
     "nodemon": "^1.18.10"
   },
   "dependencies": {
+    "basic-auth": "^2.0.1",
     "koa": "^2.7.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
