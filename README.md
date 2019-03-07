@@ -1,8 +1,8 @@
 ## Usage
 
-To access the API, user must have an access token.
+In order to access the API, user must have an access token.
 To get one, you must send a `POST` request with basic authentication credentials. 
-E.g. `curl -X POST --user vasya:qwerty %HOST%/api/v1/generate-token`. You'll get a response containing it.
+E.g. `curl -X POST --user vasya:qwerty %HOST%/api/v1/users/login`. You'll get a response containing it.
 Include this token for each API request in the `Authorization` header as follows: `Authorization: token %YOUR_TOKEN%`.
 
 The root endpoint is `HOST/api/v1`.
