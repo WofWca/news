@@ -1,7 +1,7 @@
 const mongodb = require('mongodb');
 const ObjectID = mongodb.ObjectID;
 
-async function getAuthorIdObjByIdStr(authorIdStr, authorsCollection) {
+async function getAuthorByIdStr(authorIdStr, authorsCollection) {
   let authrorIdObj;
   try {
     authrorIdObj = ObjectID(authorIdStr);
@@ -12,7 +12,7 @@ async function getAuthorIdObjByIdStr(authorIdStr, authorsCollection) {
   if (author === null) {
     throw 'No user specified by authorId found';
   }
-  return authrorIdObj;
+  return author;
 }
 
 exports.getAll = async ctx => {
@@ -27,7 +27,7 @@ exports.create = async ctx => {
     // Convert authorId string to authorId object.
     try {
       newNews.authorId =
-        await getAuthorIdObjByIdStr(newNews.authorId, usersCollection);
+        (await getAuthorByIdStr(newNews.authorId, usersCollection))._id;
     } catch (err) {
       ctx.throw(400, err);
     }
@@ -45,7 +45,7 @@ exports.update = async ctx => {
     // Convert authorId string to authorId object.
     try {
       update.$set.authorId =
-        await getAuthorIdObjByIdStr(update.$set.authorId, usersCollection);
+        (await getAuthorByIdStr(update.$set.authorId, usersCollection))._id;
     } catch (err) {
       ctx.throw(400, err);
     }
