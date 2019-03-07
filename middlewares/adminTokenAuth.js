@@ -1,4 +1,6 @@
-module.exports = function adminTokenAuthMiddleware(usersCollection) {
+const userModel = require('../models/user');
+
+module.exports = function adminTokenAuthMiddleware() {
   return async (ctx, next) => {
     const authHeader = ctx.request.get('Authorization');
     const authMethodStr = 'token ';
@@ -7,7 +9,7 @@ module.exports = function adminTokenAuthMiddleware(usersCollection) {
         '"Authorization: token %YOUR_AUTH_TOKEN%"');
     }
     const authToken = authHeader.slice(authMethodStr.length);
-    const user = await usersCollection.findOne({ authToken: authToken });
+    const user = await userModel.authenticateToken(authToken);
     if (user === null) {
       ctx.throw(403, 'No such token');
     }

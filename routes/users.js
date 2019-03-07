@@ -5,4 +5,4 @@ const usersRouter = new KoaRouter();
 
 usersRouter.post('/login', usersController.login);
 
-module.exports = usersController;
+module.exports = usersRouter;

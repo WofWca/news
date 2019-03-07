@@ -1,62 +1,51 @@
-const mongodb = require('mongodb');
-const ObjectID = mongodb.ObjectID;
-
-async function getAuthorByIdStr(authorIdStr, authorsCollection) {
-  let authrorIdObj;
-  try {
-    authrorIdObj = ObjectID(authorIdStr);
-  } catch (err) {
-    throw 'Invalid authorId';
-  }
-  const author = await authorsCollection.findOne({ _id: authrorIdObj });
-  if (author === null) {
-    throw 'No user specified by authorId found';
-  }
-  return author;
-}
+const newsModel = require('../models/news');
+const userModel = require('../models/user');
 
 exports.getAll = async ctx => {
-  ctx.body = await newsCollection.find({}).toArray();
+  ctx.body = await newsModel.getAll();
 };
 
+/**
+ * Create a piece of news. If `authorId` is not specified, whoever made the
+ * request becomes the author.
+ */
 exports.create = async ctx => {
-  const newNews = ctx.request.body;
-  if (!newNews.hasOwnProperty('authorId')) {
-    newNews.authorId = ctx.state.user._id;
-  } else {
-    // Convert authorId string to authorId object.
+  let author;
+  if (ctx.request.body.hasOwnProperty('authorId')) {
     try {
-      newNews.authorId =
-        (await getAuthorByIdStr(newNews.authorId, usersCollection))._id;
+      author = await userModel.get(ctx.request.body.authorId);
     } catch (err) {
-      ctx.throw(400, err);
+      ctx.throw(400, 'Invalid authorId');
     }
+    if (author === null) {
+      ctx.throw(400, 'No user with specified authorId found');
+    }
+  } else {
+    author = ctx.state.user;
   }
-  const res = await newsCollection.insertOne(newNews);
-  ctx.body = res.result;
+  const authorId = author._id;
+  const newPieceOfNews = Object.assign({}, ctx.request.body);
+  newPieceOfNews.authorId = authorId;
+  const res = await newsModel.create(newPieceOfNews);
+  ctx.body = res;
 };
 
 exports.update = async ctx => {
-  const query = { _id: new ObjectID(ctx.params.id) };
-  const update = {
-    $set: ctx.request.body
-  };
-  if (update.$set.hasOwnProperty('authorId')) {
-    // Convert authorId string to authorId object.
-    try {
-      update.$set.authorId =
-        (await getAuthorByIdStr(update.$set.authorId, usersCollection))._id;
-    } catch (err) {
-      ctx.throw(400, err);
-    }
+  let res;
+  try {
+    res = await newsModel.update(ctx.params.id, ctx.request.body);
+  } catch (err) {
+    ctx.throw(400, `Invalid news ID: "${ctx.params.id}"`);
   }
-  const res = await newsCollection.updateOne(query, update);
-  ctx.body = res.result;
+  ctx.body = res;
 };
 
 exports.delete = async ctx => {
-  const res = await newsCollection.deleteOne({
-    _id: new ObjectID(ctx.params.id)
-  });
-  ctx.body = res.result;
+  let res;
+  try {
+    res = await newsModel.delete(ctx.params.id);
+  } catch (err) {
+    ctx.throw(400, `Invalid news ID: "${ctx.params.id}"`);
+  }
+  ctx.body = res;
 };
