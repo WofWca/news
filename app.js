@@ -1,15 +1,13 @@
 'use strict';
 
 const Koa = require('koa');
-const KoaRouter = require('koa-router');
+const rootRouter = require('./routes/root');
 const mongodb = require('mongodb');
 const MongoClient = mongodb.MongoClient;
-const ObjectID = mongodb.ObjectID;
 const bodyParser = require('koa-bodyparser');
-const basicAuth = require('basic-auth');
-const uuidv4 = require('uuid/v4');
 
-const PORT = 8000; // TODO
+// TODO get from env?
+const PORT = 8000;
 const MONGO_URL = 'mongodb://localhost:27017/';
 const DB_NAME = 'news_app';
 
@@ -20,114 +18,8 @@ const dbClient = new MongoClient(MONGO_URL, { useNewUrlParser: true });
 const dbConnectPromise = dbClient.connect();
 
 const app = new Koa();
-const rootRouter = new KoaRouter({
-  prefix: '/api/v1'
-});
-const newsRouter = new KoaRouter();
 
 app.use(bodyParser());
-
-function adminTokenAuthMiddleware() {
-  return async (ctx, next) => {
-    const authHeader = ctx.request.get('Authorization');
-    const authMethodStr = 'token ';
-    if (!authHeader.startsWith(authMethodStr)) {
-      ctx.throw(401, 'Add Authorization header:' +
-        '"Authorization: token %YOUR_AUTH_TOKEN%"');
-    }
-    const authToken = authHeader.slice(authMethodStr.length);
-    const user = await usersCollection.findOne({authToken: authToken});
-    if (user === null) {
-      ctx.throw (403, 'No such token');
-    }
-    if (user.admin !== true) {
-      ctx.throw(403, 'Not admin');
-    }
-    ctx.state.user = user;
-    await next();
-  };
-}
-newsRouter.use(adminTokenAuthMiddleware());
-
-async function getAuthorIdObjByIdStr(authorIdStr, authorsCollection) {
-  let authrorIdObj;
-  try {
-    authrorIdObj = ObjectID(authorIdStr);
-  } catch (err) {
-    throw 'Invalid authorId';
-  }
-  const author = await authorsCollection.findOne({ _id: authrorIdObj });
-  if (author === null) {
-    throw 'No user specified by authorId found';
-  }
-  return authrorIdObj;
-}
-newsRouter.get('/', async ctx => {
-  ctx.body = await newsCollection.find({}).toArray();
-});
-newsRouter.post('/', async ctx => {
-  const newNews = ctx.request.body;
-  if (!newNews.hasOwnProperty('authorId')) {
-    newNews.authorId = ctx.state.user._id;
-  } else {
-    // Convert authorId string to authorId object.
-    try {
-      newNews.authorId =
-        await getAuthorIdObjByIdStr(newNews.authorId, usersCollection);
-    } catch (err) {
-      ctx.throw(400, err);
-    }
-  }
-  const res = await newsCollection.insertOne(newNews);
-  ctx.body = res.result;
-});
-newsRouter.put('/:id', async ctx => {
-  const query = { _id: new ObjectID(ctx.params.id) };
-  const update = {
-    $set: ctx.request.body
-  };
-  if (update.$set.hasOwnProperty('authorId')) {
-    // Convert authorId string to authorId object.
-    try {
-      update.$set.authorId =
-        await getAuthorIdObjByIdStr(update.$set.authorId, usersCollection);
-    } catch (err) {
-      ctx.throw(400, err);
-    }
-  }
-  const res = await newsCollection.updateOne(query, update);
-  ctx.body = res.result;
-});
-newsRouter.delete('/:id', async ctx => {
-  const res = await newsCollection.deleteOne({
-    _id: new ObjectID(ctx.params.id)
-  });
-  ctx.body = res.result;
-});
-
-// Uses basic auth.
-rootRouter.post('/generate-token', async ctx => {
-  const credentials = basicAuth(ctx.req);
-  if (credentials === undefined) {
-    ctx.throw(401, 'Use Basic Authentication');
-  }
-  const user = await usersCollection.findOne({
-    login: credentials.name,
-    password: credentials.pass
-  });
-  if (user === null) {
-    ctx.throw(403, 'No such login/password pair');
-  } else {
-    const newAuthToken = uuidv4();
-    ctx.body = { authToken: newAuthToken };
-    usersCollection.updateOne(
-      { _id: user._id },
-      { $set: { authToken: newAuthToken }}
-    );
-  }
-});
-
-rootRouter.use('/news', newsRouter.routes(), newsRouter.allowedMethods());
 
 app
   .use(rootRouter.routes())
